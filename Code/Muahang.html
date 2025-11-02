@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Product List - Muahang</title>
+  <style>
+    :root{
+      --bg:#0f1724;
+      --panel:#0b1220;
+      --muted:#9aa4b2;
+      --accent:#ffb86b;
+      --card-radius:12px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;background:linear-gradient(180deg,#071022 0%,var(--bg) 60%);color:#e6eef8;min-height:100vh}
+    .app{display:flex;gap:20px;padding:18px;align-items:flex-start}
+    /* Sidebar */
+    .sidebar{
+      width:360px;
+      max-width:40%;
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+      border-radius:var(--card-radius);
+      padding:12px;
+      border:1px solid rgba(255,255,255,0.03);
+      box-shadow:0 12px 34px rgba(0,0,0,0.5);
+      height:80vh;
+      overflow:auto;
+    }
+    .sidebar-header{display:flex;align-items:center;justify-content:space-between;padding:6px 8px 12px}
+    .sidebar-header h3{margin:0;font-size:16px}
+    .search{flex:1;margin-left:12px}
+    .search input{width:100%;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted)}
+    .product-list{display:flex;flex-direction:column;gap:10px;padding:4px}
+    .product-item{
+      display:flex;gap:10px;align-items:center;padding:10px;border-radius:10px;background:rgba(255,255,255,0.01);cursor:pointer;
+      transition:transform .16s ease,box-shadow .16s ease;border:1px solid rgba(255,255,255,0.02)
+    }
+    .product-item:hover{transform:translateY(-6px);box-shadow:0 18px 36px rgba(2,6,23,0.6)}
+    .product-thumb{width:72px;height:72px;border-radius:8px;overflow:hidden;flex:0 0 72px}
+    .product-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .product-info{flex:1;min-width:0}
+    .product-title{font-weight:700;font-size:14px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .product-desc{font-size:12px;color:var(--muted);margin-top:6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+    .product-meta{display:flex;align-items:center;gap:8px;margin-top:8px}
+    .price{font-weight:800;color:var(--accent)}
+    .add-btn{padding:6px 10px;border-radius:8px;border:none;background:linear-gradient(90deg,#ffb86b,#ff7a7a);color:#061220;font-weight:800;cursor:pointer}
+
+    /* Main content (product preview) */
+    .main{
+      flex:1;
+      min-width:320px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+      border-radius:var(--card-radius);
+      padding:18px;
+      border:1px solid rgba(255,255,255,0.03);
+      box-shadow:0 12px 34px rgba(0,0,0,0.45);
+      height:80vh;
+      overflow:auto;
+    }
+    .preview{
+      display:grid;
+      grid-template-columns:360px 1fr;
+      gap:20px;
+      align-items:start;
+    }
+    .preview-thumb{width:100%;height:420px;border-radius:12px;overflow:hidden;background:#061220;display:flex;align-items:center;justify-content:center}
+    .preview-thumb img{width:100%;height:100%;object-fit:cover}
+    .preview-meta h2{margin:0 0 8px 0}
+    .preview-meta p{color:var(--muted)}
+    .qty-row{display:flex;gap:8px;align-items:center;margin-top:12px}
+    .qty{width:60px;padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted)}
+    .buy-row{margin-top:18px;display:flex;gap:12px;align-items:center}
+    .buy-btn{padding:12px 16px;border-radius:12px;border:none;background:linear-gradient(90deg,#ffb86b,#ff7a7a);color:#061220;font-weight:900;cursor:pointer}
+    .wish-btn{padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);cursor:pointer}
+
+    /* Responsive */
+    @media (max-width:980px){
+      .app{flex-direction:column;padding:12px}
+      .sidebar{width:100%;max-width:100%;height:auto}
+      .preview{grid-template-columns:1fr}
+      .preview-thumb{height:320px}
+      .main{height:auto}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="Products">
+      <div class="sidebar-header">
+        <h3>Product List (20)</h3>
+        <div class="search">
+          <input id="searchInput" type="search" placeholder="Search products..." aria-label="Search products">
+        </div>
+      </div>
+
+      <div id="productList" class="product-list" role="list">
+        <!-- items rendered by JS -->
+      </div>
+    </aside>
+
+    <main class="main" id="mainPreview">
+      <div class="preview" id="previewArea">
+        <div class="preview-thumb" id="previewThumb">
+          <!-- image -->
+        </div>
+        <div class="preview-meta" id="previewMeta">
+          <h2>Select a product</h2>
+          <p class="desc">Click any product on the left to preview details here. Example product list with 20 sample items and images is provided.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // 20 example products
+    const products = [
+      {id:1, name:'White Nest - 10g', price:19.99, desc:'Premium cleaned bird nest, 10g.', img:'https://picsum.photos/seed/p1/800/600'},
+      {id:2, name:'White Nest - 25g', price:44.99, desc:'Family pack, 25g.', img:'https://picsum.photos/seed/p2/800/600'},
+      {id:3, name:'Gift Box (3x10g)', price:89.00, desc:'Premium gift set.', img:'https://picsum.photos/seed/p3/800/600'},
+      {id:4, name:'Instant Bird Nest Drink', price:7.99, desc:'Ready-to-drink single serve (100ml).', img:'https://picsum.photos/seed/p4/800/600'},
+      {id:5, name:'Dried Bird Nest - 50g', price:159.99, desc:'Large premium pack.', img:'https://picsum.photos/seed/p5/800/600'},
+      {id:6, name:'Bird Nest Powder', price:29.50, desc:'Easy-mix powder.', img:'https://picsum.photos/seed/p6/800/600'},
+      {id:7, name:'Bird Nest Capsules', price:34.00, desc:'Daily supplement.', img:'https://picsum.photos/seed/p7/800/600'},
+      {id:8, name:'Bird Nest Soap', price:12.99, desc:'Skin nourishing soap bar.', img:'https://picsum.photos/seed/p8/800/600'},
+      {id:9, name:'Bird Nest Syrup', price:24.75, desc:'Concentrated syrup bottle.', img:'https://picsum.photos/seed/p9/800/600'},
+      {id:10, name:'Bird Nest Powder - Kids', price:19.00, desc:'Mild formula for children.', img:'https://picsum.photos/seed/p10/800/600'},
+      {id:11, name:'Luxury Gift Tin', price:129.00, desc:'Deluxe packaging for gifting.', img:'https://picsum.photos/seed/p11/800/600'},
+      {id:12, name:'Organic Bird Nest', price:199.50, desc:'Organic certified batch.', img:'https://picsum.photos/seed/p12/800/600'},
+      {id:13, name:'Premium Bird Nest - 100g', price:349.99, desc:'Top grade, 100g.', img:'https://picsum.photos/seed/p13/800/600'},
+      {id:14, name:'Bird Nest Face Cream', price:45.00, desc:'Rejuvenating cream.', img:'https://picsum.photos/seed/p14/800/600'},
+      {id:15, name:'Bird Nest Facial Mask', price:9.50, desc:'Single-use sheet mask.', img:'https://picsum.photos/seed/p15/800/600'},
+      {id:16, name:'Bird Nest Honey Blend', price:22.00, desc:'Blend with natural honey.', img:'https://picsum.photos/seed/p16/800/600'},
+      {id:17, name:'Bird Nest Concentrate', price:59.99, desc:'High potency concentrate.', img:'https://picsum.photos/seed/p17/800/600'},
+      {id:18, name:'Bird Nest Tea', price:14.99, desc:'Soothing tea mix.', img:'https://picsum.photos/seed/p18/800/600'},
+      {id:19, name:'Travel Sample Pack', price:27.99, desc:'Assorted small samples.', img:'https://picsum.photos/seed/p19/800/600'},
+      {id:20, name:'Bird Nest Cookbook', price:16.00, desc:'Recipes and serving ideas.', img:'https://picsum.photos/seed/p20/800/600'}
+    ];
+
+    const productListEl = document.getElementById('productList');
+    const previewThumb = document.getElementById('previewThumb');
+    const previewMeta = document.getElementById('previewMeta');
+    const searchInput = document.getElementById('searchInput');
+
+    function formatPrice(p){ return '$' + Number(p).toFixed(2); }
+
+    function renderList(filterText = ''){
+      productListEl.innerHTML = '';
+      const filtered = products.filter(p => {
+        if(!filterText) return true;
+        const q = filterText.toLowerCase();
+        return p.name.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q);
+      });
+      filtered.forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'product-item';
+        item.setAttribute('role','listitem');
+        item.innerHTML = `
+          <div class="product-thumb"><img src="${p.img}" alt="${escapeHtml(p.name)}"></div>
+          <div class="product-info">
+            <div class="product-title">${escapeHtml(p.name)}</div>
+            <div class="product-desc">${escapeHtml(p.desc)}</div>
+            <div class="product-meta">
+              <div class="price">${formatPrice(p.price)}</div>
+              <button class="add-btn" data-id="${p.id}">Add</button>
+            </div>
+          </div>
+        `;
+        // click preview
+        item.addEventListener('click', (ev)=>{
+          // ignore clicks on the add button
+          if(ev.target.closest('.add-btn')) return;
+          showPreview(p.id);
+        });
+        // add button click
+        item.querySelector('.add-btn').addEventListener('click', (ev)=>{
+          ev.stopPropagation();
+          const id = ev.currentTarget.getAttribute('data-id');
+          addToCart(Number(id));
+        });
+        productListEl.appendChild(item);
+      });
+    }
+
+    function showPreview(id){
+      const p = products.find(x=>x.id===Number(id));
+      if(!p) return;
+      previewThumb.innerHTML = `<img src="${p.img}" alt="${escapeHtml(p.name)}">`;
+      previewMeta.innerHTML = `
+        <h2>${escapeHtml(p.name)}</h2>
+        <p class="desc">${escapeHtml(p.desc)}</p>
+        <div class="qty-row">
+          <label for="qty">Số lượng:</label>
+          <input id="qty" class="qty" type="number" value="1" min="1">
+        </div>
+        <div class="buy-row">
+          <button class="buy-btn" onclick="buyNow(${p.id})">Buy now — ${formatPrice(p.price)}</button>
+          <button class="wish-btn" onclick="addToWishlist(${p.id})">Wishlist</button>
+        </div>
+      `;
+    }
+
+    function addToCart(id){
+      const p = products.find(x=>x.id===Number(id));
+      if(!p) return alert('Product not found');
+      alert(`Added to cart: ${p.name} — ${formatPrice(p.price)}`);
+    }
+    function buyNow(id){
+      const qty = Number(document.getElementById('qty')?.value || 1);
+      const p = products.find(x=>x.id===Number(id));
+      if(!p) return;
+      alert(`Proceed to buy ${qty} × ${p.name} — total ${formatPrice(p.price * qty)}`);
+    }
+    function addToWishlist(id){
+      const p = products.find(x=>x.id===Number(id));
+      if(!p) return;
+      alert(`Added to wishlist: ${p.name}`);
+    }
+
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+    }
+
+    // search
+    searchInput.addEventListener('input', ()=> renderList(searchInput.value.trim()));
+    // initial render
+    renderList();
+
+    // optional: select first item by default
+    if(products.length) setTimeout(()=> showPreview(products[0].id), 50);
+  </script>
+</body>
+</html>
