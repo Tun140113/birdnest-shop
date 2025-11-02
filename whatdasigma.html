@@ -1,0 +1,320 @@
+<!--
+  Birdnest Shop - Single-file HTML (responsive)
+  - Replace product images (current placeholders from picsum.photos)
+  - Edit product details inside the <script> `products` array
+  - To host: upload this file as index.html to GitHub Pages, Netlify, or any static host
+  - Contact / Buy buttons use mailto and external links; change to your own payment links if needed
+-->
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Yến Sào Khang</title>
+  <style>
+    :root{
+      --bg:#0f1724; /* deep navy */
+      --card:#0b1220;
+      --accent:#ffb86b; /* warm amber */
+      --muted:#9aa4b2;
+      --glass: rgba(255,255,255,0.04);
+      --radius:16px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#071022 0%, var(--bg) 60%);color:#e6eef8;min-height:100vh;-webkit-font-smoothing:antialiased}
+    header{display:flex;align-items:center;justify-content:space-between;padding:20px 28px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#ff7a7a);display:flex;align-items:center;justify-content:center;font-weight:700;color:#061220;box-shadow:0 6px 18px rgba(0,0,0,0.5);cursor:pointer;}
+    .brand h1{font-size:18px;margin:0}
+    nav a{color:var(--muted);text-decoration:none;margin-left:18px;font-weight:600}
+    nav a:hover{color:var(--accent)}
+
+    .hero{display:grid;grid-template-columns:1fr 420px;gap:28px;align-items:center;padding:36px 28px}
+    .hero-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:28px;border-radius:var(--radius);box-shadow:0 10px 30px rgba(2,6,23,0.6)}
+    .hero h2{margin:0;font-size:34px;line-height:1.02}
+    .hero p{color:var(--muted);margin-top:12px}
+    .cta-row{margin-top:20px;display:flex;gap:12px}
+    .btn{background:var(--accent);color:#061220;padding:12px 18px;border-radius:12px;border:none;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(255,184,107,0.12);transition:transform .18s ease}
+    .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+    .btn:hover{transform:translateY(-4px)}
+
+    /* Product grid */
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;padding:28px}
+    .card{background:var(--card);border-radius:14px;padding:12px;overflow:hidden;position:relative;border:1px solid rgba(255,255,255,0.03);transition:transform .25s ease, box-shadow .25s ease}
+    .card:hover{transform:translateY(-8px);box-shadow:0 18px 40px rgba(2,6,23,0.6)}
+    .thumb{height:160px;border-radius:10px;overflow:hidden;display:block}
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1);transition:transform .8s cubic-bezier(.2,.9,.2,1)}
+    .card:hover .thumb img{transform:scale(1.08) rotate(-1deg)}
+    .meta{padding:10px 6px}
+    .meta h3{margin:0;font-size:16px}
+    .price-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+    .price{font-weight:800;color:var(--accent)}
+    .buy{padding:8px 10px;border-radius:10px;border:none;background:linear-gradient(90deg,#ffb86b,#ff7a7a);cursor:pointer;font-weight:700}
+
+    /* subtle floating animation for hero product box */
+    .showcase{background:var(--glass);padding:14px;border-radius:12px;backdrop-filter: blur(6px);animation:float 4s ease-in-out infinite}
+    @keyframes float{0%{transform:translateY(0)}50%{transform:translateY(-8px)}100%{transform:translateY(0)}}
+
+    /* simple cart badge */
+    .cart{position:relative}
+    .badge{position:absolute;top:-6px;right:-8px;background:#ff4557;color:white;border-radius:999px;padding:4px 7px;font-size:12px;font-weight:700}
+
+    /* footer */
+    footer{padding:22px 28px;color:var(--muted);font-size:14px;border-top:1px solid rgba(255,255,255,0.02);display:flex;justify-content:space-between}
+
+    /* responsive */
+    @media (max-width:880px){
+      .hero{grid-template-columns:1fr;}
+      .hero-card{order:2}
+    }
+
+    /* ===== Contact Seller animation ===== */
+    .contact-btn{position:relative;will-change:transform}
+    .contact-btn.animate {
+      animation:contact-drop 640ms cubic-bezier(.22,.9,.3,1);
+      box-shadow:0 16px 34px rgba(0,0,0,0.35);
+    }
+    @keyframes contact-drop{
+      0%   { transform:translateY(0) rotate(0); }
+      25%  { transform:translateY(22px) rotate(-6deg); }
+      45%  { transform:translateY(-8px) rotate(6deg); }
+      65%  { transform:translateY(12px) rotate(-3deg); }
+      85%  { transform:translateY(-4px) rotate(1deg); }
+      100% { transform:translateY(0) rotate(0); }
+    }
+
+    /* ===== iframe overlay (popup) ===== */
+    .overlay{
+      position:fixed;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(2,6,23,0.6);
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .24s ease;
+      z-index:1200;
+    }
+    .overlay.show{ opacity:1; pointer-events:auto; }
+    .overlay-panel{
+      width:92vw;
+      height:86vh;
+      max-width:1100px;
+      max-height:800px;
+      background:#071022;
+      border-radius:12px;
+      box-shadow:0 30px 80px rgba(2,6,23,0.8);
+      overflow:hidden;
+      transform:translateY(18px) scale(.98);
+      transition:transform .32s cubic-bezier(.2,.9,.3,1);
+      border:1px solid rgba(255,255,255,0.03);
+    }
+    .overlay.show .overlay-panel{ transform:translateY(0) scale(1); }
+    .overlay iframe{ width:100%; height:100%; border:0; display:block; background:white; }
+    .overlay-close{
+      position:absolute;
+      right:14px;
+      top:12px;
+      z-index:1210;
+      background:rgba(0,0,0,0.4);
+      color:#fff;
+      border:0;
+      width:36px;
+      height:36px;
+      border-radius:8px;
+      font-size:20px;
+      cursor:pointer;
+      backdrop-filter: blur(4px);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <a href="https://sites.google.com/view/bobeo/trang-ch%E1%BB%A7" target="_blank" rel="noopener" title="Go to homepage">
+        <div class="logo" style="background:none; box-shadow:none;">
+          <img src="https://cdn.discordapp.com/attachments/1431959307032723558/1434441081549885480/download_3.jpg?ex=690856dc&is=6907055c&hm=2da08cebaf532017b9d2351fe2ade32e7c011647a40bb48e047a85f58d80ffac&" alt="Birdnest Logo" style="width:52px; height:52px; border-radius:12px; object-fit:cover; display:block;">
+        </div>
+      </a>
+      <div>
+        <h1>Birdnest Shop</h1>
+        <div style="font-size:12px;color:var(--muted)">Premium edible bird's nest • Natural • Packaged</div>
+      </div>
+    </div>
+
+    <nav>
+      <a href="#products">Products</a>
+      <a href="#about">About</a>
+      <a href="#contact">Contact</a>
+      <a class="cart" href="#cart">Cart <span class="badge" id="cartCount">0</span></a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="hero-card">
+      <h2>Pure Bird's Nest — Handpicked, Cleaned & Ready</h2>
+      <p>Natural bird's nest sourced from trusted farms. Rich in glycoproteins and traditional goodness. Perfect as a daily boost or a special gift.</p>
+      <div class="cta-row">
+        <button class="btn" onclick="location.href='#products'">Shop Now</button>
+        <button class="btn secondary" onclick="openLink('https://example.com')">Learn More</button>
+      </div>
+
+      <div style="margin-top:18px;display:flex;gap:12px;align-items:center">
+        <div class="showcase" style="flex:1">
+          <strong id="heroName">White Nest - 10g</strong>
+          <div style="color:var(--muted);margin-top:8px" id="heroDesc">Premium grade, cleaned, to consume or gift.</div>
+          <div style="margin-top:10px;font-weight:800;color:var(--accent)" id="heroPrice">$19.99</div>
+        </div>
+        <img id="heroImg" src="https://picsum.photos/seed/bn1/320/220" alt="hero" style="width:160px;height:120px;border-radius:12px;object-fit:cover;box-shadow:0 10px 30px rgba(2,6,23,0.6)">
+      </div>
+    </div>
+
+    <div style="padding:6px">
+      <div style="background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:18px;border-radius:12px;min-height:220px;"> 
+        <h3 style="margin:0">Why choose our nest?</h3>
+        <ul style="color:var(--muted);margin-top:10px;line-height:1.6">
+          <li>Hand-cleaned <strong>zero bleach</strong></li>
+          <li>Lab tested for purity</li>
+          <li>Fast shipping & small-batch packaging</li>
+        </ul>
+        <div style="margin-top:10px"><button class="btn contact-btn" onclick="contactSeller(event)">Contact Seller</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="products">
+    <div class="grid" id="productGrid">
+      <!-- Product cards injected by JS -->
+    </div>
+  </section>
+
+  <footer>
+    <div>&copy; <span id="year"></span> Birdnest Shop — All rights reserved.</div>
+    <div style="display:flex;gap:12px;color:var(--muted)"><a href="#" style="color:var(--muted);text-decoration:none">Terms</a><a href="#contact" style="color:var(--muted);text-decoration:none">Contact</a></div>
+  </footer>
+
+  <!-- iframe popup (inserted) -->
+  <div id="overlay" class="overlay" aria-hidden="true" onclick="if(event.target===this) closeOverlay()">
+    <div class="overlay-panel" role="dialog" aria-modal="true">
+      <button class="overlay-close" onclick="closeOverlay()" title="Close">×</button>
+      <iframe id="overlayIframe" src="" allowfullscreen></iframe>
+    </div>
+  </div>
+
+  <script>
+    // Sample product data: edit this array to add / update products
+    const products = [
+      {id:1,name:'White Nest - 10g',price:19.99,desc:'Premium cleaned bird nest, 10 grams, ready to cook',img:'https://picsum.photos/seed/bn1/600/400',link:'mailto:orders@birdnestshop.example?subject=Order%20White%20Nest%2010g'},
+      {id:2,name:'White Nest - 25g',price:44.99,desc:'Bigger pack for families and gifts',img:'https://picsum.photos/seed/bn2/600/400',link:'mailto:orders@birdnestshop.example?subject=Order%20White%20Nest%2025g'},
+      {id:3,name:'Bird Nest Gift Box',price:89.00,desc:'Gift box (3x10g) with premium packaging',img:'https://picsum.photos/seed/bn3/600/400',link:'https://example.com/pay?product=giftbox'},
+      {id:4,name:'Instant Bird Nest Drink',price:7.99,desc:'Ready-to-drink single serve (100ml)',img:'https://picsum.photos/seed/bn4/600/400',link:'https://example.com/pay?product=drink'}
+    ];
+
+    // Render product cards
+    const grid = document.getElementById('productGrid');
+    const heroName = document.getElementById('heroName');
+    const heroDesc = document.getElementById('heroDesc');
+    const heroPrice = document.getElementById('heroPrice');
+    const heroImg = document.getElementById('heroImg');
+    const cartCount = document.getElementById('cartCount');
+    let cart = [];
+
+    function render(){
+      grid.innerHTML = '';
+      products.forEach(p => {
+        const card = document.createElement('div'); card.className='card';
+        card.innerHTML = `
+          <a class="thumb" href="#" onclick="showHero(${p.id});return false"><img src="${p.img}" alt="${p.name}"></a>
+          <div class="meta">
+            <h3>${p.name}</h3>
+            <div style="color:var(--muted);font-size:13px;margin-top:6px">${p.desc}</div>
+            <div class="price-row">
+              <div class="price">$${p.price.toFixed(2)}</div>
+              <div>
+                <button class="buy" onclick='buyItem(${p.id})'>Buy</button>
+              </div>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function showHero(id){
+      const p = products.find(x=>x.id===id);
+      if(!p) return;
+      heroName.textContent = p.name;
+      heroDesc.textContent = p.desc;
+      heroPrice.textContent = '$' + p.price.toFixed(2);
+      heroImg.src = p.img;
+      // little pop animation
+      heroImg.animate([{transform:'scale(0.98)'},{transform:'scale(1)'}],{duration:420,easing:'cubic-bezier(.2,.9,.2,1)'});
+    }
+
+    function buyItem(id){
+      const p = products.find(x=>x.id===id);
+      if(!p) return;
+      // Add to cart (localStorage) and increment badge
+      cart.push(p.id);
+      cartCount.textContent = cart.length;
+      // if link is mailto or http, open it to proceed to checkout
+      openLink(p.link);
+    }
+
+    function openLink(url){
+      window.open(url,'_blank');
+    }
+
+    function contactSeller(e){
+      // play animation on the button, then show iframe popup when animation ends
+      const btn = e && e.currentTarget ? e.currentTarget : document.querySelector('.contact-btn');
+      const overlay = document.getElementById('overlay');
+      const iframe = document.getElementById('overlayIframe');
+      const popupUrl = 'https://noet.github.io/BirdnestShop/index.html'; // popup target
+
+      if(!btn){
+        // fallback: open in new tab
+        window.open(popupUrl, '_blank');
+        return;
+      }
+
+      // replay button animation
+      btn.classList.remove('animate');
+      void btn.offsetWidth;
+      btn.classList.add('animate');
+
+      function onEnd(){
+        btn.removeEventListener('animationend', onEnd);
+        // show overlay and set iframe src (set after animation to avoid heavy load until needed)
+        iframe.src = popupUrl;
+        overlay.classList.add('show');
+        overlay.setAttribute('aria-hidden','false');
+      }
+      btn.addEventListener('animationend', onEnd);
+    }
+
+    function closeOverlay(){
+      const overlay = document.getElementById('overlay');
+      const iframe = document.getElementById('overlayIframe');
+      overlay.classList.remove('show');
+      overlay.setAttribute('aria-hidden','true');
+      // give transition a moment then remove src to stop playback/network
+      setTimeout(()=>{ iframe.src = ''; }, 300);
+    }
+
+    // initial render
+    render();
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // small keyboard easter: press 'c' to clear cart, 'h' to show hero first product
+    document.addEventListener('keydown', e=>{
+      if(e.key==='c'){ cart = []; cartCount.textContent = 0; alert('Cart cleared'); }
+      if(e.key==='h'){ showHero(products[0].id); }
+    });
+
+  </script>
+</body>
+</html>
